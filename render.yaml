@@ -1,0 +1,28 @@
+# Render Blueprint for Automated Cloud Deployment
+# https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: library-api
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: dev
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: library-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 8080
+    healthCheckPath: /actuator/health
+
+databases:
+  - name: library-postgres
+    databaseName: library
+    user: library_user
+    plan: free
+    region: oregon

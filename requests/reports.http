@@ -1,0 +1,22 @@
+### Library Management API - Circulation Reports & Analytics
+@baseUrl = http://localhost:8080/api/v1
+
+### Login as Librarian
+# @name loginLibrarian
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "librarian@library.com",
+  "password": "password123"
+}
+
+@librarianToken = {{loginLibrarian.response.body.accessToken}}
+
+### 1. View Overdue Loans Report (Member info, book details, days overdue)
+GET {{baseUrl}}/reports/overdue
+Authorization: Bearer {{librarianToken}}
+
+### 2. View Most Popular Books Report (Last 30 Days)
+GET {{baseUrl}}/reports/popular-books?days=30&limit=10
+Authorization: Bearer {{librarianToken}}

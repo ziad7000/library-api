@@ -1,0 +1,34 @@
+### Library Management API - Fines Settlement
+@baseUrl = http://localhost:8080/api/v1
+
+### Login as Member
+# @name loginMember
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "member@library.com",
+  "password": "password123"
+}
+
+@memberToken = {{loginMember.response.body.accessToken}}
+
+### Login as Librarian
+# @name loginLibrarian
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "librarian@library.com",
+  "password": "password123"
+}
+
+@librarianToken = {{loginLibrarian.response.body.accessToken}}
+
+### 1. View My Fines
+GET {{baseUrl}}/fines/me
+Authorization: Bearer {{memberToken}}
+
+### 2. Settle / Pay Fine (Librarian Action)
+POST {{baseUrl}}/fines/11111111-2222-3333-4444-555555555555/pay
+Authorization: Bearer {{librarianToken}}
