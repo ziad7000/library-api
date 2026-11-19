@@ -44,4 +44,14 @@ public interface LoanRepository extends JpaRepository<Loan, UUID> {
             "WHERE l.status = 'ACTIVE' AND l.dueDate < :today " +
             "ORDER BY l.dueDate ASC")
     List<Loan> findOverdueLoansWithDetails(@Param("today") LocalDate today);
+
+    @Query("SELECT new com.library.report.dto.PopularBookReportResponse(b.id, b.isbn, b.title, COUNT(l.id)) " +
+            "FROM Loan l JOIN l.book b " +
+            "WHERE l.borrowedAt >= :since " +
+            "GROUP BY b.id, b.isbn, b.title " +
+            "ORDER BY COUNT(l.id) DESC")
+    List<com.library.report.dto.PopularBookReportResponse> findMostBorrowedBooksSince(
+            @Param("since") java.time.Instant since,
+            Pageable pageable
+    );
 }
