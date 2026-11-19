@@ -54,18 +54,20 @@ class LoanConcurrencyIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("Concurrency Proof: Exactly one member succeeds when concurrently borrowing the last available copy")
     void whenTwoMembersBorrowLastCopy_exactlyOneSucceeds() throws InterruptedException {
-        // 1. Arrange: Create Category, Author, and Book with exactly 1 available copy
-        Category category = categoryRepository.save(new Category(UUID.randomUUID(), "Computer Science"));
-        Author author = authorRepository.save(new Author(UUID.randomUUID(), "Robert C. Martin"));
+        // 1. Arrange: Create unique Category, Author, and Book with exactly 1 available copy
+        String testSuffix = UUID.randomUUID().toString().substring(0, 8);
+        Category category = categoryRepository.save(new Category(UUID.randomUUID(), "Concurrency Category " + testSuffix));
+        Author author = authorRepository.save(new Author(UUID.randomUUID(), "Concurrency Author " + testSuffix));
 
-        Book book = new Book(UUID.randomUUID(), "9780132350884", "Clean Code", "A Handbook of Agile Software Craftsmanship",
-                2008, "English", category, 1, 1);
+        String uniqueIsbn = "979" + String.format("%010d", Math.abs(UUID.randomUUID().getMostSignificantBits() % 10000000000L));
+        Book book = new Book(UUID.randomUUID(), uniqueIsbn, "Concurrent Title " + testSuffix, "Description",
+                2024, "English", category, 1, 1);
         book.setAuthors(List.of(author));
         Book savedBook = bookRepository.save(book);
 
         // Create two distinct members
-        User member1 = userRepository.save(new User(UUID.randomUUID(), "member1@library.com", "hash1", "Member One", Role.MEMBER, true));
-        User member2 = userRepository.save(new User(UUID.randomUUID(), "member2@library.com", "hash2", "Member Two", Role.MEMBER, true));
+        User member1 = userRepository.save(new User(UUID.randomUUID(), "concurrent_user_a_" + testSuffix + "@test.com", "hash1", "User A", Role.MEMBER, true));
+        User member2 = userRepository.save(new User(UUID.randomUUID(), "concurrent_user_b_" + testSuffix + "@test.com", "hash2", "User B", Role.MEMBER, true));
 
         // 2. Act: Prepare concurrent borrow execution
         ExecutorService executor = Executors.newFixedThreadPool(2);
