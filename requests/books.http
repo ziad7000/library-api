@@ -1,0 +1,68 @@
+### Library Management API - Books & Catalog
+@baseUrl = http://localhost:8080/api/v1
+
+### Login as Librarian first to obtain auth token
+# @name loginLibrarian
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "librarian@library.com",
+  "password": "password123"
+}
+
+@librarianToken = {{loginLibrarian.response.body.accessToken}}
+
+### 1. List / Search Books (Public - All titles, sorted by title)
+GET {{baseUrl}}/books?page=0&size=10&sort=title,asc
+
+### 2. Search Books by Keyword (e.g. 'clean' or 'java')
+GET {{baseUrl}}/books?query=clean&page=0&size=10
+
+### 3. Filter Only Available Books
+GET {{baseUrl}}/books?availableOnly=true
+
+### 4. Get Book by ID
+GET {{baseUrl}}/books/b1111111-1111-1111-1111-111111111111
+
+### 5. Create a New Book (Librarian)
+POST {{baseUrl}}/books
+Authorization: Bearer {{librarianToken}}
+Content-Type: application/json
+
+{
+  "isbn": "9780135957059",
+  "title": "The Pragmatic Programmer: 20th Anniversary Edition",
+  "description": "Your journey to mastery in software development.",
+  "publicationYear": 2019,
+  "language": "English",
+  "categoryId": "c1111111-1111-1111-1111-111111111111",
+  "authorIds": [
+    "a2222222-2222-2222-2222-222222222222"
+  ],
+  "totalCopies": 3
+}
+
+### 6. List All Categories (Public)
+GET {{baseUrl}}/categories
+
+### 7. Create a Category (Librarian)
+POST {{baseUrl}}/categories
+Authorization: Bearer {{librarianToken}}
+Content-Type: application/json
+
+{
+  "name": "Cloud Computing & DevOps"
+}
+
+### 8. List All Authors (Public)
+GET {{baseUrl}}/authors?page=0&size=20
+
+### 9. Create an Author (Librarian)
+POST {{baseUrl}}/authors
+Authorization: Bearer {{librarianToken}}
+Content-Type: application/json
+
+{
+  "name": "Andy Hunt"
+}
