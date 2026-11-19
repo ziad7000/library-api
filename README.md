@@ -2,7 +2,7 @@
 
 > A production-grade backend REST API engineered with **Java 21**, **Spring Boot 3.4**, and **PostgreSQL**. Demonstrates atomic concurrency control, relational schema migrations, role-based JWT security, automated integration testing with Testcontainers, and multi-stage containerization.
 
-[![CI](https://github.com/ziad7000/library-api/actions/workflows/ci.yml/badge.svg)](https://github.com/ziad7000/library-api/actions)
+[![CI](https://github.com/ziad7000/library-api/workflows/Continuous%20Integration/badge.svg)](https://github.com/ziad7000/library-api/actions)
 ![Java](https://img.shields.io/badge/Java-21%20LTS-orange?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue?logo=postgresql&logoColor=white)
