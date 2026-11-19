@@ -55,6 +55,9 @@ class LoanServiceTest {
     private FineRepository fineRepository;
 
     @Mock
+    private ReservationService reservationService;
+
+    @Mock
     private LibraryProperties properties;
 
     @Mock
@@ -221,7 +224,7 @@ class LoanServiceTest {
         assertThat(loan.getStatus()).isEqualTo(LoanStatus.RETURNED);
         // 5 days * 2.00 = 10.00
         verify(fineRepository).save(any(Fine.class));
-        verify(bookRepository).incrementAvailableCopies(book.getId());
+        verify(reservationService).promoteNextWaitingOrRelease(book.getId());
     }
 
     @Test
@@ -243,7 +246,7 @@ class LoanServiceTest {
 
         assertThat(loan.getStatus()).isEqualTo(LoanStatus.RETURNED);
         verify(fineRepository, never()).save(any(Fine.class));
-        verify(bookRepository).incrementAvailableCopies(book.getId());
+        verify(reservationService).promoteNextWaitingOrRelease(book.getId());
     }
 
     @Test
