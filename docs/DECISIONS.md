@@ -65,3 +65,36 @@ Use **BCrypt with adaptive work factor** via Spring Security's `BCryptPasswordEn
 1. **Built-in Salt Generation:** BCrypt automatically generates and embeds a cryptographically secure 128-bit salt within the hash string, defending against pre-computed rainbow tables.
 2. **Adaptive Cost Factor:** Work factor can be scaled up as compute power increases without altering existing schema.
 3. **Industry Standard:** Broadly audited, battle-tested standard for authentication storage.
+
+---
+
+## ADR-004: Concurrency Strategy for Inventory Updates (Atomic Conditional Update)
+
+- **Status:** Accepted
+- **Date:** 2026-11-19
+- **Deciders:** Engineering Team
+
+### Context
+When multiple library members attempt to borrow the last available copy of a popular book simultaneously, a race condition can allow `available_copies` to drop below zero, corrupting inventory data and violating database check constraints (`0 <= available_copies <= total_copies`).
+
+We evaluated three potential locking mechanisms:
+1. **Pessimistic Locking (`SELECT FOR UPDATE`):** Explicitly locks the book row from the start of the transaction until commit.
+2. **Optimistic Locking with JPA `@Version`:** Detects version collisions at commit time and throws an `OptimisticLockException`, requiring application retry loops.
+3. **Atomic Conditional Update:** Executes an atomic SQL query:
+   ```sql
+   UPDATE books
+   SET available_copies = available_copies - 1, updated_at = NOW()
+   WHERE id = :bookId AND available_copies > 0;
+   ```
+
+### Decision
+Use **Atomic Conditional Update** (`WHERE available_copies > 0`) combined with database check constraints.
+
+### Rationale
+1. **Lock Duration Minimization:** Row-level locks in PostgreSQL are held only for the duration of the single `UPDATE` statement execution, rather than for the lifetime of the entire Spring `@Transactional` method.
+2. **No Retry Overhead:** Unlike optimistic locking, there is no need for application-level retry loops or exponential backoff handling when competing for the last copy.
+3. **Deterministic Row Count:** PostgreSQL returns the count of affected rows (`1` on success, `0` if another transaction claimed the copy first). If `0` rows are updated, the service immediately throws `ConflictException` (mapped to HTTP 409 Conflict), providing clean feedback.
+4. **Defense in Depth:** The underlying PostgreSQL `CHECK (available_copies >= 0 AND available_copies <= total_copies)` constraint guarantees that even in extreme edge cases, data integrity cannot be violated at the database level.
+
+### Proof & Verification
+Verified with `LoanConcurrencyIntegrationTest`: two parallel threads simultaneously dispatch borrow requests for a book with 1 remaining copy using a `CountDownLatch`. Exactly one receives HTTP 201/success, exactly one receives HTTP 409 Conflict, and `available_copies` remains exactly `0`.
