@@ -15,6 +15,7 @@ import com.library.loan.dto.LoanResponse;
 import com.library.loan.model.Loan;
 import com.library.loan.model.LoanStatus;
 import com.library.loan.repository.LoanRepository;
+import com.library.reservation.service.ReservationService;
 import com.library.user.model.Role;
 import com.library.user.model.User;
 import com.library.user.repository.UserRepository;
