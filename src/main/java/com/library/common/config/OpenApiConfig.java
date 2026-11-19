@@ -24,7 +24,7 @@ public class OpenApiConfig {
                         .version("1.0.0")
                         .contact(new Contact()
                                 .name("Portfolio Project")
-                                .url("https://github.com/ziad/library-api"))
+                                .url("https://github.com/ziad7000/library-api"))
                         .license(new License()
                                 .name("MIT License")
                                 .url("https://opensource.org/licenses/MIT")))
