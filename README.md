@@ -16,10 +16,10 @@
 ## 🌐 Interactive OpenAPI / Swagger UI
 
 Interactive Swagger documentation is available at:
-`http://localhost:8080/swagger-ui.html`
+- Local: `http://localhost:8080/swagger-ui.html`
+- Live Deployment: [https://library-api-o22a.onrender.com/swagger-ui.html](https://library-api-o22a.onrender.com/swagger-ui.html)
+- Live Health Check: [https://library-api-o22a.onrender.com/actuator/health](https://library-api-o22a.onrender.com/actuator/health)
 
-Live Cloud Deployment:
-`https://library-api-prod.onrender.com/swagger-ui.html`
 
 ---
 
@@ -201,6 +201,7 @@ Significant technical trade-offs are documented in [docs/DECISIONS.md](file:///U
 - **[ADR-005](file:///Users/ziad/Desktop/library%20api/docs/DECISIONS.md#adr-005-schema-management-via-flyway-vs-hibernate-ddl-auto):** Versioned Flyway Migrations vs. Hibernate DDL Auto
 - **[ADR-006](file:///Users/ziad/Desktop/library%20api/docs/DECISIONS.md#adr-006-multi-stage-dockerfile-with-least-privilege-execution):** Multi-Stage Containerization with Unprivileged User
 - **[ADR-007](file:///Users/ziad/Desktop/library%20api/docs/DECISIONS.md#adr-007-integration-testing-with-testcontainers-postgresql-vs-in-memory-h2):** Testcontainers PostgreSQL vs. In-Memory H2
+- **[ADR-008](file:///Users/ziad/Desktop/library%20api/docs/DECISIONS.md#adr-008-cloud-database-connection-string-normalization-render--heroku-uri-support):** Cloud Database Connection String Normalization (Render / Heroku URI Support)
 
 ---
 
