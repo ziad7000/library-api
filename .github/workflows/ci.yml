@@ -10,6 +10,9 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_API_VERSION: "1.45"
+      TESTCONTAINERS_RYUK_DISABLED: "false"
 
     steps:
       - name: Checkout Source Code
