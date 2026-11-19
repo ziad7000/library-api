@@ -10,10 +10,26 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: dev
-      - key: SPRING_DATASOURCE_URL
+      - key: DB_HOST
         fromDatabase:
           name: library-postgres
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: library-postgres
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: library-postgres
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: library-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: library-postgres
+          property: password
       - key: JWT_SECRET
         generateValue: true
       - key: PORT

@@ -155,3 +155,25 @@ Use **Testcontainers PostgreSQL** for all repository and integration test suites
 1. **Production Parity:** Tests execute against the exact same PostgreSQL container image (`postgres:17-alpine`) used in production and Docker Compose.
 2. **Real Constraint Validation:** Database constraints such as `0 <= available_copies <= total_copies` and PostgreSQL row locking semantics behave identically in tests as in production.
 3. **Zero Configuration for Developers:** Docker manages the ephemeral database lifecycle automatically; no local PostgreSQL installation is required.
+
+---
+
+## ADR-008: Cloud Database Connection String Normalization (Render / Heroku URI Support)
+
+- **Status:** Accepted
+- **Date:** 2026-11-19
+- **Deciders:** Engineering Team
+
+### Context
+Cloud PaaS providers like Render, Heroku, and Railway inject managed database credentials as unified URI strings (e.g. `postgresql://user:password@host:port/database` or `postgres://...`). The official PostgreSQL JDBC driver (`pgjdbc`), however, requires the `jdbc:postgresql://` protocol prefix and explicitly rejects URI authority credentials (`user:password@`), throwing `java.lang.RuntimeException: Driver org.postgresql.Driver claims to not accept jdbcUrl`.
+
+### Decision
+Implement a dual-resilience strategy:
+1. Configure Render Blueprint (`render.yaml`) to bind granular environment variables (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`) via `fromDatabase`.
+2. Implement a custom Spring Boot `EnvironmentPostProcessor` (`DatabaseUrlEnvironmentPostProcessor`) that intercepts unified cloud database URIs (`SPRING_DATASOURCE_URL`, `DATABASE_URL`, or `spring.datasource.url`), extracts credentials and parameters, and normalizes them into standard JDBC connection properties before connection pools initialize.
+
+### Rationale
+1. **Universal Portability:** The service boots seamlessly regardless of how the cloud provider injects database configuration—whether via discrete environment variables or a single unified URI.
+2. **Early Lifecycle Execution:** Operating at the `EnvironmentPostProcessor` phase guarantees normalization before HikariCP or Flyway bootstrap, preventing driver handshake crashes.
+3. **Zero Boilerplate for Operators:** Developers deploying to Render or similar cloud platforms require zero manual string manipulation or custom entrypoint shell scripts.
+
