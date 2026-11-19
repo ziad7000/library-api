@@ -16,6 +16,8 @@ import com.library.loan.dto.LoanResponse;
 import com.library.loan.model.Loan;
 import com.library.loan.model.LoanStatus;
 import com.library.loan.repository.LoanRepository;
+import com.library.reservation.model.Reservation;
+import com.library.reservation.service.ReservationService;
 import com.library.user.model.Role;
 import com.library.user.model.User;
 import com.library.user.repository.UserRepository;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -37,6 +40,7 @@ public class LoanService {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final FineRepository fineRepository;
+    private final ReservationService reservationService;
     private final LibraryProperties properties;
     private final TimeProvider timeProvider;
 
@@ -45,6 +49,7 @@ public class LoanService {
             BookRepository bookRepository,
             UserRepository userRepository,
             FineRepository fineRepository,
+            ReservationService reservationService,
             LibraryProperties properties,
             TimeProvider timeProvider
     ) {
@@ -52,6 +57,7 @@ public class LoanService {
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
         this.fineRepository = fineRepository;
+        this.reservationService = reservationService;
         this.properties = properties;
         this.timeProvider = timeProvider;
     }
@@ -91,10 +97,17 @@ public class LoanService {
         Book book = bookRepository.findById(request.bookId())
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found with id: " + request.bookId()));
 
-        // Atomic decrement for concurrency safety
-        int updatedRows = bookRepository.decrementAvailableCopies(book.getId());
-        if (updatedRows == 0) {
-            throw new ConflictException("No copies available for borrowing for book: " + book.getTitle());
+        // Check if member has a READY reservation holding a copy for them
+        Optional<Reservation> readyReservation = reservationService.findReadyReservation(book.getId(), userId);
+        if (readyReservation.isPresent()) {
+            // Fulfill reservation using the held copy (no decrement needed as copy was already held)
+            reservationService.fulfillReservation(readyReservation.get());
+        } else {
+            // General borrowing: atomic decrement for concurrency safety
+            int updatedRows = bookRepository.decrementAvailableCopies(book.getId());
+            if (updatedRows == 0) {
+                throw new ConflictException("No copies available for borrowing for book: " + book.getTitle());
+            }
         }
 
         Loan loan = new Loan();
@@ -136,8 +149,8 @@ public class LoanService {
             fineRepository.save(fine);
         }
 
-        // Increase available copies back
-        bookRepository.incrementAvailableCopies(loan.getBook().getId());
+        // Promote oldest waiting reservation or release copy back to general availability
+        reservationService.promoteNextWaitingOrRelease(loan.getBook().getId());
 
         Loan saved = loanRepository.save(loan);
         return LoanResponse.from(saved, today);
@@ -165,6 +178,11 @@ public class LoanService {
 
         if (today.isAfter(loan.getDueDate())) {
             throw new BusinessRuleException("Cannot renew an overdue loan. Please return the book.");
+        }
+
+        // Rule: Not allowed if anyone is waiting or has a ready reservation for the book
+        if (reservationService.hasPendingReservations(loan.getBook().getId())) {
+            throw new BusinessRuleException("Cannot renew: Another member is waiting in the reservation queue for this book");
         }
 
         loan.setDueDate(loan.getDueDate().plusDays(properties.loanPeriodDays()));
